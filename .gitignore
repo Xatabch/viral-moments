@@ -1,0 +1,12 @@
+.venv
+.env
+/videos
+*.pdf
+*.wav
+*.mp4
+*.txt
+*.xml
+*.iml
+.DS_Store
+*.pyc
+__pycache__
