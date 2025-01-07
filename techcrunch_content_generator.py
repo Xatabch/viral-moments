@@ -2,22 +2,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-import PyPDF2
 from configs import config
 from typing import List
 
-def extract_text_from_pdf(pdf_path):
-    """Извлекает текст из PDF-файла."""
-    with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
-    return text
-
-def create_content():
-    pdf_text = extract_text_from_pdf(config.PDF_FILE_NAME)
-
+def create_content(articles):
     model = ChatOpenAI(model=config.GPT_MODEL, api_key=config.OPENAI_API, temperature=0.7, max_tokens=3000)
 
     class Response(BaseModel):
@@ -28,21 +16,21 @@ def create_content():
 
     parser = JsonOutputParser(pydantic_object=Response)
     system_template = """
-                Role: You are the professional science popular blogger
-                Context: You creating the shorts video for youtube shorts, instagram reels, tiktok. You receive the science PDF file "{pdf_text}".
-                Task: Create the text for short video explaining the concepts in the PDF file with science popular style. Don't use any formats like emoji etc, just return the text
+                Role: You are the professional tech blogger
+                Context: You know all about viral moments and you creating the shorts video for youtube shorts, instagram reels, tiktok based on the tech news. You receive the tech articles "{articles}".
+                Task: Create the text for short video with the most interesting tech news from the articles. Don't use any formats like emoji etc, just return the text
                 \n{format_instructions}\n
     """
     prompt = PromptTemplate(
                 template=system_template,
-                input_variables=["pdf_text"],
+                input_variables=["articles"],
                 partial_variables={"format_instructions": parser.get_format_instructions()},
     )
 
     chain = prompt | model | parser
 
     result = chain.invoke({
-        "pdf_text": pdf_text[:2000],
+        "articles": articles,
     })
 
     return result
