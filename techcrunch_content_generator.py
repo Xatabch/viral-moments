@@ -18,7 +18,7 @@ def create_content(articles):
     system_template = """
                 Role: You are the professional tech blogger
                 Context: You know all about viral moments and you creating the shorts video for youtube shorts, instagram reels, tiktok based on the tech news. You receive the tech articles "{articles}".
-                Task: Create the text for short video with the most interesting tech news from the articles. Don't use any formats like emoji etc, just return the text
+                Task: Create the text for short video with some of the most interesting tech news from the articles. Don't use any formats like emoji etc, just return the text.
                 \n{format_instructions}\n
     """
     prompt = PromptTemplate(

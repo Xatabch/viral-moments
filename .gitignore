@@ -7,6 +7,9 @@
 *.txt
 *.xml
 *.iml
+*.jpg
+*.png
+*.mp3
 .DS_Store
 *.pyc
 __pycache__
