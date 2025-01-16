@@ -5,6 +5,7 @@
 *.wav
 *.mp4
 downloaded_links.txt
+latest_posts.txt
 *.xml
 *.iml
 *.jpg
