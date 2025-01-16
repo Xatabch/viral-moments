@@ -4,7 +4,7 @@
 *.pdf
 *.wav
 *.mp4
-*.txt
+downloaded_links.txt
 *.xml
 *.iml
 *.jpg
