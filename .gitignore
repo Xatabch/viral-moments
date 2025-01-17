@@ -1,8 +1,7 @@
-.venv
+.venv*
 .env
 /videos
 *.pdf
-*.wav
 *.mp4
 downloaded_links.txt
 latest_posts.txt
