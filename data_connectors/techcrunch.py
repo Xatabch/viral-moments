@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 def fetch_posts(num):
     url = "https://techcrunch.com/latest"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36"}
-    
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         print("Failed to fetch TechCrunch posts")

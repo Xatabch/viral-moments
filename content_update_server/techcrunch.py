@@ -2,14 +2,24 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import schedule
-from flask import Flask
+import os
+import time
+import telegram
+from configs import config
+import asyncio
+from flows.techcrunch_generate import create_video_with_data
+from utils.cleanup import cleanup
 
 # Конфигурация
-FETCH_INTERVAL = 3600  # Интервал проверки в секундах
+FETCH_INTERVAL = 20  # Интервал проверки в секундах
 NUM_ARTICLES = 5    # Количество получаемых статей
 STORAGE_FILE = "./data/storages/techcrunch_posts.txt"
+VIDEO_DIRECTORY = "./"  # Путь к директории с видео
+SPECIFIC_VIDEO_FILENAME = "output.mp4"
 
-app = Flask(__name__)
+# Настройки Telegram бота
+TELEGRAM_BOT_TOKEN = config.TELEGRAM_BOT_TOKEN  # Замените на токен вашего бота
+TELEGRAM_CHAT_ID = config.TELEGRAM_CHAT_ID   # Замените на ID чата, куда отправлять видео
 
 def fetch_posts(num):
     url = "https://techcrunch.com/latest"
@@ -66,14 +76,45 @@ def load_previous_posts():
     except FileNotFoundError:
         return []
 
-def process_new_articles(new_posts):
+async def send_message_to_telegram(message):
+    """Отправляет текстовое сообщение в Telegram чат."""
+    try:
+        bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        print(f"Сообщение отправлено в Telegram: {message[:50]}...")
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения в Telegram: {e}")
+
+async def send_video_to_telegram(video_path):
+    """Отправляет видеофайл в Telegram чат."""
+    try:
+        bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+        with open(video_path, 'rb') as video_file:
+            await bot.send_video(chat_id=TELEGRAM_CHAT_ID, video=video_file)
+        print(f"Видео успешно отправлено в Telegram: {os.path.basename(video_path)}")
+    except Exception as e:
+        print(f"Ошибка при отправке видео в Telegram: {e}")
+
+async def process_new_articles(new_posts):
     print("Обнаружены новые статьи:")
     for post in new_posts:
         print(f"- {post['title']}")
-    # Здесь можно вызвать вашу функцию для обработки новых статей
-    # Например: my_custom_function(new_posts)
 
-def fetch_and_compare():
+    tech_content = await create_video_with_data(new_posts)
+    post_data = [tech_content['video_description'], tech_content['hashtags']]
+
+    # Получаем список видеофайлов из директории
+    specific_video_path = os.path.join(VIDEO_DIRECTORY, SPECIFIC_VIDEO_FILENAME)
+
+    if os.path.exists(specific_video_path):
+        await send_video_to_telegram(specific_video_path)
+        for message in post_data:
+            await send_message_to_telegram(message)
+            time.sleep(1)
+
+    cleanup('./')
+
+async def fetch_and_compare():
     print("Fetching new articles...")
     new_posts_data = fetch_posts(NUM_ARTICLES)
     if not new_posts_data:
@@ -84,12 +125,17 @@ def fetch_and_compare():
 
     if new_posts_titles and new_posts_titles != previous_posts_titles:
         print("Новые статьи отличаются от предыдущих.")
-        process_new_articles(new_posts_data)
+        await process_new_articles(new_posts_data)
         store_previous_posts(new_posts_data)
     else:
         print("Новых статей не обнаружено или они не отличаются от предыдущих.")
 
 def run_scheduler():
+    async def async_wrapper():
+        await fetch_and_compare()
+
+    schedule.every(FETCH_INTERVAL).seconds.do(lambda: asyncio.run(async_wrapper()))
+
     while True:
         schedule.run_pending()
         time.sleep(1)

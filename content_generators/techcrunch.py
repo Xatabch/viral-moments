@@ -11,7 +11,7 @@ def create_content(articles):
     class Response(BaseModel):
         reels_text: str = Field(description="the text for the video")
         video_description: str = Field(description="description for the social networks")
-        hastags: str = Field(description="hashtags for social networks")
+        hashtags: str = Field(description="hashtags for social networks")
 
     parser = JsonOutputParser(pydantic_object=Response)
     system_template = """

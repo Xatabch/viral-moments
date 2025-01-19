@@ -1,19 +1,17 @@
-from content_update_server.techcrunch import app, fetch_and_compare, schedule, run_scheduler
+from content_update_server.techcrunch import fetch_and_compare, schedule, run_scheduler
 import threading
+from flask import Flask
 
-FETCH_INTERVAL = 3600
-
-@app.route('/')
-def index():
-    return "Сервер запущен и проверяет новые статьи TechCrunch."
+app = Flask('name')
 
 if __name__ == "__main__":
-    fetch_and_compare()
-
-    schedule.every(FETCH_INTERVAL).seconds.do(fetch_and_compare)
+    # Проверяем, является ли поток главным, чтобы не запускать планировщик дважды
+    if not threading.current_thread().name == "MainThread":
+        exit()
 
     # Запускаем планировщик в отдельном потоке
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
 
-    app.run(debug=True)
+    # Запускаем Flask без перезагрузки
+    app.run(debug=False, use_reloader=False)

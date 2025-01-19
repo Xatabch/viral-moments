@@ -25,4 +25,5 @@ def cleanup(directory):
                     print(f"Не удалось удалить {file_path}: {e}")
 
 
-cleanup("./")
+if __name__ == "__main__":
+    cleanup("./")
