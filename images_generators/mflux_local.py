@@ -4,7 +4,7 @@ def generate_images(prompts):
     # Load the model
     flux = Flux1.from_alias(
         alias="schnell",  # "schnell" or "dev"
-        quantize=8,       # 4 or 8
+        # quantize=8,       # 4 or 8
     )
 
     i = 0
@@ -21,6 +21,6 @@ def generate_images(prompts):
             )
         )
 
-        image.save(path=f"images/{i}.jpg")
+        image.save(path=f"data/images/{i}.jpg")
 
         i += 1

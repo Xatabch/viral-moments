@@ -7,20 +7,26 @@ from moviepy.editor import (
     concatenate_audioclips
 )
 import whisper
-import re
+# import re
 
-FONT_SIZE = 95
+FONT_SIZE = 50
 TEXT_COLOR = '#DF4040'
 SHADOW_COLOR = 'black'
 SHADOW_OPACITY = 0.6  # Уменьшил непрозрачность для более мягкой тени
 SHADOW_OFFSET_X = 0
 SHADOW_OFFSET_Y = 10
 
+# def normalize_text(text):
+#     """
+#     Убирает знаки пунктуации и приводит текст к верхнему регистру.
+#     """
+#     text = re.sub(r'[^\w\s]', '', text)
+#     return text.upper()
+
 def normalize_text(text):
     """
-    Убирает знаки пунктуации и приводит текст к верхнему регистру.
+    Приводит текст к верхнему регистру.
     """
-    text = re.sub(r'[^\w\s]', '', text)
     return text.upper()
 
 def split_text_to_fit(text, max_line_length):

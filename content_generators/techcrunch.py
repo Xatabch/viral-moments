@@ -9,10 +9,9 @@ def create_content(articles):
     model = ChatOpenAI(model=config.GPT_MODEL, api_key=config.OPENAI_API, temperature=0.7, max_tokens=3000)
 
     class Response(BaseModel):
-        reels_text: str = Field(description="the text for video")
-        video_description: str = Field(description="description for social networks")
-        hastags: str = Field(description="hastags for social networks")
-        prompts: List[str] = Field(description="list of 20 prompt for image generator flux fast for generating images for this video. The prompts should have the order like the news gone. In prompt for images add that they should be in cinematic dark style with cinematic light.")
+        reels_text: str = Field(description="the text for the video")
+        video_description: str = Field(description="description for the social networks")
+        hastags: str = Field(description="hashtags for social networks")
 
     parser = JsonOutputParser(pydantic_object=Response)
     system_template = """

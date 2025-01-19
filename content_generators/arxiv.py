@@ -24,13 +24,13 @@ def create_content():
         reels_text: str = Field(description="the text for video")
         video_description: str = Field(description="description for social networks")
         hastags: str = Field(description="hastags for social networks")
-        prompts: List[str] = Field(description="list of 5 prompt for stable diffusion image generator for generating images for this video")
+        prompts: List[str] = Field(description="list of 30 prompts for image generator AI model for generating images for this video")
 
     parser = JsonOutputParser(pydantic_object=Response)
     system_template = """
                 Role: You are the professional science popular blogger
                 Context: You creating the shorts video for youtube shorts, instagram reels, tiktok. You receive the science PDF file "{pdf_text}".
-                Task: Create the text for short video explaining the concepts in the PDF file with science popular style. Don't use any formats like emoji etc, just return the text
+                Task: Create the text for short video explaining the concepts in the PDF file with science popular style. The content should not be more than 40 sec. Don't use any formats like emoji etc, just return the text
                 \n{format_instructions}\n
     """
     prompt = PromptTemplate(

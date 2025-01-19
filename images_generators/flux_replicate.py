@@ -7,8 +7,9 @@ def generate_images(prompts):
     i = 0
 
     for prompt in prompts:
+        print(prompt)
         input = {
-            "prompt": prompt,
+            "prompt": prompt + " in cinematic style, dark neon light",
             "aspect_ratio": "9:16"
         }
 

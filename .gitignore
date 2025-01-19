@@ -13,3 +13,6 @@ latest_posts.txt
 .DS_Store
 *.pyc
 __pycache__
+credentials.json
+token.json
+techcrunch_posts.txt

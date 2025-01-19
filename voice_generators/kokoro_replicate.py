@@ -6,7 +6,7 @@ def text_to_speech(text):
 
     input = {
         "text": text,
-        "speed": 1.1,
+        "speed": 1,
         "voice": "am_adam",
     }
 
