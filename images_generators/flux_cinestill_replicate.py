@@ -7,7 +7,7 @@ def generate_images(prompts):
     i = 0
 
     for prompt in prompts:
-        print("CNSTILL, " + prompt)
+        print("CNSTILL, " + prompt + " in cinematic style, dark neon light")
         input = {
             "prompt": "CNSTILL, " + prompt + " in cinematic style, dark neon light",
             "lora_scale": 1,

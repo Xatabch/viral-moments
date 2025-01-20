@@ -61,8 +61,4 @@ def upload_video_to_youtube(video_file, title, description):
     print("Video URL: https://www.youtube.com/watch?v=" + response["id"])
 
 if __name__ == "__main__":
-    # video_path = input("Enter the path to the video file: ")
-    # video_title = input("Enter the video title: ")
-    # video_description = input("Enter the video description: ")
-
-    upload_video_to_youtube('output.mp4', 'big title', 'big description')
+    upload_video_to_youtube('output.mp4', 'Tech news #TikTok#TechNews#AI#History#TechUpdate', "Catch up on the latest tech updates! TikTok returns in the US after a temporary ban, with a potential joint venture on the horizon. Plus, AI's struggle with history questions reveals its limitations. Don't miss out on these trending stories.")

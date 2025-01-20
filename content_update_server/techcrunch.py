@@ -9,9 +9,10 @@ from configs import config
 import asyncio
 from flows.techcrunch_generate import create_video_with_data
 from utils.cleanup import cleanup
+from social_publicators.youtube import upload_video_to_youtube
 
 # Конфигурация
-FETCH_INTERVAL = 20  # Интервал проверки в секундах
+FETCH_INTERVAL = 3600  # Интервал проверки в секундах
 NUM_ARTICLES = 5    # Количество получаемых статей
 STORAGE_FILE = "./data/storages/techcrunch_posts.txt"
 VIDEO_DIRECTORY = "./"  # Путь к директории с видео
@@ -112,6 +113,7 @@ async def process_new_articles(new_posts):
             await send_message_to_telegram(message)
             time.sleep(1)
 
+    upload_video_to_youtube('output.mp4', "Tech news " + tech_content['hashtags'], tech_content['video_description'])
     cleanup('./')
 
 async def fetch_and_compare():
