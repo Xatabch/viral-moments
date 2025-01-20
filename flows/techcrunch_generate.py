@@ -22,7 +22,7 @@ async def create_video_with_data(data):
     print(duration, frames)
 
     # 4. Create prompts
-    model = whisper.load_model("large")
+    model = whisper.load_model("base")
     result = model.transcribe('./voice.wav', fp16=False, word_timestamps=True)
     segments = []
     for segment in result['segments']:
