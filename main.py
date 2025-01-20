@@ -25,7 +25,7 @@ if __name__ == "__main__":
     print(duration, frames)
 
     # 5. Create prompts
-    model = whisper.load_model("large")
+    model = whisper.load_model("base")
     result = model.transcribe('./voice.wav', fp16=False, word_timestamps=True)
     segments = []
     for segment in result['segments']:
