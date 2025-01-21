@@ -125,12 +125,17 @@ async def fetch_and_compare():
     new_posts_titles = [post['title'] for post in new_posts_data]
     previous_posts_titles = load_previous_posts()
 
-    if new_posts_titles and new_posts_titles != previous_posts_titles:
-        print("Новые статьи отличаются от предыдущих.")
-        await process_new_articles(new_posts_data)
+    # Находим новые статьи, сравнивая списки заголовков
+    new_articles = [title for title in new_posts_titles if title not in previous_posts_titles]
+
+    if len(new_articles) >= 5:
+        print(f"Обнаружено {len(new_articles)} новых статей (>= 5).")
+        # Фильтруем full данные постов, чтобы остались только новые
+        actual_new_posts_data = [post for post in new_posts_data if post['title'] in new_articles]
+        await process_new_articles(actual_new_posts_data)
         store_previous_posts(new_posts_data)
     else:
-        print("Новых статей не обнаружено или они не отличаются от предыдущих.")
+        print(f"Обнаружено {len(new_articles)} новых статей. Необходимо минимум 5 для запуска обработки.")
 
 def run_scheduler():
     async def async_wrapper():
