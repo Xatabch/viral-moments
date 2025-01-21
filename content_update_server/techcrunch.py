@@ -20,7 +20,7 @@ SPECIFIC_VIDEO_FILENAME = "output.mp4"
 
 # Настройки Telegram бота
 TELEGRAM_BOT_TOKEN = config.TELEGRAM_BOT_TOKEN  # Замените на токен вашего бота
-TELEGRAM_CHAT_ID = config.TELEGRAM_CHAT_ID   # Замените на ID чата, куда отправлять видео
+TELEGRAM_CHAT_IDS = [config.TELEGRAM_CHAT_ID1, config.TELEGRAM_CHAT_ID2]   # Замените на ID чата, куда отправлять видео
 
 def fetch_posts(num):
     url = "https://techcrunch.com/latest"
@@ -81,8 +81,9 @@ async def send_message_to_telegram(message):
     """Отправляет текстовое сообщение в Telegram чат."""
     try:
         bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        print(f"Сообщение отправлено в Telegram: {message[:50]}...")
+        for id in TELEGRAM_CHAT_IDS:
+            await bot.send_message(chat_id=id, text=message)
+            print(f"Сообщение отправлено в Telegram: {message[:50]}...")
     except Exception as e:
         print(f"Ошибка при отправке сообщения в Telegram: {e}")
 
@@ -90,8 +91,9 @@ async def send_video_to_telegram(video_path):
     """Отправляет видеофайл в Telegram чат."""
     try:
         bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
-        with open(video_path, 'rb') as video_file:
-            await bot.send_video(chat_id=TELEGRAM_CHAT_ID, video=video_file)
+        for id in TELEGRAM_CHAT_IDS:
+            with open(video_path, 'rb') as video_file:
+                await bot.send_video(chat_id=id, video=video_file)
         print(f"Видео успешно отправлено в Telegram: {os.path.basename(video_path)}")
     except Exception as e:
         print(f"Ошибка при отправке видео в Telegram: {e}")
@@ -138,6 +140,7 @@ async def fetch_and_compare():
         print(f"Обнаружено {len(new_articles)} новых статей. Необходимо минимум 5 для запуска обработки.")
 
 def run_scheduler():
+    print("run sched")
     async def async_wrapper():
         await fetch_and_compare()
 
