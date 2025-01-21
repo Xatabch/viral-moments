@@ -7,21 +7,6 @@ from moviepy.editor import (
     concatenate_audioclips
 )
 import whisper
-# import re
-
-FONT_SIZE = 50
-TEXT_COLOR = '#DF4040'
-SHADOW_COLOR = 'black'
-SHADOW_OPACITY = 0.6  # Уменьшил непрозрачность для более мягкой тени
-SHADOW_OFFSET_X = 0
-SHADOW_OFFSET_Y = 10
-
-# def normalize_text(text):
-#     """
-#     Убирает знаки пунктуации и приводит текст к верхнему регистру.
-#     """
-#     text = re.sub(r'[^\w\s]', '', text)
-#     return text.upper()
 
 def normalize_text(text):
     """
@@ -52,7 +37,7 @@ def split_text_to_fit(text, max_line_length):
 
     return lines
 
-def create_shadow_clip(text, fontsize, color, stroke_width, stroke_color, x, y, start_time, end_time, font, opacity=SHADOW_OPACITY):
+def create_shadow_clip(text, fontsize, color, stroke_width, stroke_color, x, y, start_time, end_time, font, opacity):
     """Создает текстовый клип для тени."""
     return TextClip(
         txt=normalize_text(text),
@@ -61,7 +46,6 @@ def create_shadow_clip(text, fontsize, color, stroke_width, stroke_color, x, y, 
         stroke_width=stroke_width,
         stroke_color=stroke_color,
         color=color,
-        # Непрозрачность для тени
     ).set_position((x, y)).set_start(start_time).set_end(end_time).set_opacity(opacity)
 
 def create_line_clips(
@@ -71,28 +55,34 @@ def create_line_clips(
     video_w,
     video_h,
     font,
-    fontsize=FONT_SIZE,
-    color='white',
-    line_y_start=-50,  # Начальная вертикальная позиция для первой строки
+    text_color,
+    font_size,
+    shadow_opacity,
+    shadow_color,
+    shadow_offset_x,
+    shadow_offset_y,
+    stroke_color,
+    text_stroke_width,
+    line_y_start=-50,
 ):
     """
-    Создаёт белые TextClip с тенью для каждого слова, располагая их по строкам с переносом.
+    Создаёт TextClip для каждого слова, располагая их по строкам с переносом.
     """
     clips = []
     current_line_words = []
     current_line_width = 0
-    line_height = fontsize * 1.2  # Примерный интервал между строками
+    line_height = font_size * 1.2  # Примерный интервал между строками
     current_y_offset = line_y_start
 
     for word_data in words_list:
         w, _, _ = word_data
         temp_clip = TextClip(
             txt=normalize_text(w),
-            fontsize=fontsize,
+            fontsize=font_size,
             font=font,
-            stroke_width=4,
-            stroke_color='black',
-            color=color
+            stroke_width=text_stroke_width,
+            stroke_color=stroke_color,
+            color=text_color
         )
         word_width, _ = temp_clip.size
         temp_clip.close()
@@ -105,7 +95,7 @@ def create_line_clips(
             # Начинаем новую строку
             if current_line_words:
                 # Создаем клипы для предыдущей строки
-                total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=fontsize, font=font).size[0] + 10 for wd in current_line_words) - 10
+                total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=font_size, font=font).size[0] + 10 for wd in current_line_words) - 10
                 line_x_start = (video_w - total_width) // 2
                 x_offset = 0
                 for w_data in current_line_words:
@@ -113,30 +103,31 @@ def create_line_clips(
                     # Создаем тень
                     shadow_clip = create_shadow_clip(
                         text=w,
-                        fontsize=fontsize,
-                        color=SHADOW_COLOR,
-                        stroke_width=4,
-                        stroke_color='black',
-                        x=line_x_start + x_offset + SHADOW_OFFSET_X,
-                        y=video_h // 2 + current_y_offset + int(video_h * 0.2) + SHADOW_OFFSET_Y,
+                        fontsize=font_size,
+                        color=shadow_color,
+                        stroke_width=text_stroke_width,
+                        stroke_color=stroke_color,
+                        x=line_x_start + x_offset + shadow_offset_x,
+                        y=video_h // 2 + current_y_offset + int(video_h * 0.2) + shadow_offset_y,
                         start_time=start_time,
                         end_time=end_time,
-                        font=font
+                        font=font,
+                        opacity=shadow_opacity
                     )
                     clips.append(shadow_clip)
                     # Создаем основной текст
                     text_clip = TextClip(
                         txt=normalize_text(w),
-                        fontsize=fontsize,
+                        fontsize=font_size,
                         font=font,
-                        stroke_width=4,
-                        stroke_color='black',
-                        color=color
+                        stroke_width=text_stroke_width,
+                        stroke_color=stroke_color,
+                        color=text_color
                     ).set_position(
                         (line_x_start + x_offset, video_h // 2 + current_y_offset + int(video_h * 0.2)) # Смещение на 20% вниз
                     ).set_start(start_time).set_end(end_time)
                     clips.append(text_clip)
-                    x_offset += TextClip(txt=normalize_text(w), fontsize=fontsize, font=font).size[0] + 10
+                    x_offset += TextClip(txt=normalize_text(w), fontsize=font_size, font=font).size[0] + 10
                 current_y_offset += line_height
                 current_line_words = [word_data]
                 current_line_width = word_width
@@ -147,7 +138,7 @@ def create_line_clips(
 
     # Обрабатываем последнюю строку
     if current_line_words:
-        total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=fontsize, font=font).size[0] + 10 for wd in current_line_words) - 10
+        total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=font_size, font=font).size[0] + 10 for wd in current_line_words) - 10
         line_x_start = (video_w - total_width) // 2
         x_offset = 0
         for w_data in current_line_words:
@@ -155,30 +146,31 @@ def create_line_clips(
             # Создаем тень
             shadow_clip = create_shadow_clip(
                 text=w,
-                fontsize=fontsize,
-                color=SHADOW_COLOR,
-                stroke_width=4,
-                stroke_color='black',
-                x=line_x_start + x_offset + SHADOW_OFFSET_X,
-                y=video_h // 2 + current_y_offset + int(video_h * 0.2) + SHADOW_OFFSET_Y,
+                fontsize=font_size,
+                color=shadow_color,
+                stroke_width=text_stroke_width,
+                stroke_color=stroke_color,
+                x=line_x_start + x_offset + shadow_offset_x,
+                y=video_h // 2 + current_y_offset + int(video_h * 0.2) + shadow_offset_y,
                 start_time=start_time,
                 end_time=end_time,
-                font=font
+                font=font,
+                opacity=shadow_opacity
             )
             clips.append(shadow_clip)
             # Создаем основной текст
             text_clip = TextClip(
                 txt=normalize_text(w),
-                fontsize=fontsize,
+                fontsize=font_size,
                 font=font,
-                stroke_width=4,
-                stroke_color='black',
-                color=color
+                stroke_width=text_stroke_width,
+                stroke_color=stroke_color,
+                color='white'
             ).set_position(
                 (line_x_start + x_offset, video_h // 2 + current_y_offset + int(video_h * 0.2)) # Смещение на 20% вниз
             ).set_start(start_time).set_end(end_time)
             clips.append(text_clip)
-            x_offset += TextClip(txt=normalize_text(w), fontsize=fontsize, font=font).size[0] + 10
+            x_offset += TextClip(txt=normalize_text(w), fontsize=font_size, font=font).size[0] + 10
 
     return clips
 
@@ -187,9 +179,15 @@ def create_highlight_clips(
     video_w,
     video_h,
     font,
-    fontsize=FONT_SIZE,
-    color=TEXT_COLOR,
-    line_y_start=-50
+    font_size,
+    text_color,
+    shadow_color,
+    shadow_offset_x,
+    shadow_offset_y,
+    stroke_color,
+    text_stroke_width,
+    shadow_opacity,
+    line_y_start=-50,
 ):
     """
     Создаёт красные (подсвеченные) TextClip с тенью для каждого слова, располагая их по строкам с переносом.
@@ -197,18 +195,18 @@ def create_highlight_clips(
     clips = []
     current_line_words = []
     current_line_width = 0
-    line_height = fontsize * 1.2
+    line_height = font_size * 1.2
     current_y_offset = line_y_start
 
     for word_data in words_list:
         w, w_start, w_end = word_data
         temp_clip = TextClip(
             txt=normalize_text(w),
-            fontsize=fontsize,
+            fontsize=font_size,
             font=font,
-            stroke_width=4,
-            stroke_color='black',
-            color=color
+            stroke_width=text_stroke_width,
+            stroke_color=stroke_color,
+            color=text_color
         )
         word_width, _ = temp_clip.size
         temp_clip.close()
@@ -218,7 +216,7 @@ def create_highlight_clips(
             current_line_width += word_width + (10 if len(current_line_words) > 1 else 0)
         else:
             if current_line_words:
-                total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=fontsize, font=font).size[0] + 10 for wd in current_line_words) - 10
+                total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=font_size, font=font).size[0] + 10 for wd in current_line_words) - 10
                 line_x_start = (video_w - total_width) // 2
                 x_offset = 0
                 for w_data in current_line_words:
@@ -226,30 +224,31 @@ def create_highlight_clips(
                     # Создаем тень
                     shadow_clip = create_shadow_clip(
                         text=w,
-                        fontsize=fontsize,
-                        color=SHADOW_COLOR,
-                        stroke_width=4,
-                        stroke_color='black',
-                        x=line_x_start + x_offset + SHADOW_OFFSET_X,
-                        y=video_h // 2 + current_y_offset + int(video_h * 0.2) + SHADOW_OFFSET_Y,
+                        fontsize=font_size,
+                        color=shadow_color,
+                        stroke_width=text_stroke_width,
+                        stroke_color=stroke_color,
+                        x=line_x_start + x_offset + shadow_offset_x,
+                        y=video_h // 2 + current_y_offset + int(video_h * 0.2) + shadow_offset_y,
                         start_time=w_start,
                         end_time=w_end,
-                        font=font
+                        font=font,
+                        opacity=shadow_opacity
                     )
                     clips.append(shadow_clip)
                     # Создаем основной текст
                     text_clip = TextClip(
                         txt=normalize_text(w),
-                        fontsize=fontsize,
+                        fontsize=font_size,
                         font=font,
-                        stroke_width=4,
-                        stroke_color='black',
-                        color=color
+                        stroke_width=text_stroke_width,
+                        stroke_color=stroke_color,
+                        color=text_color
                     ).set_position(
                         (line_x_start + x_offset, video_h // 2 + current_y_offset + int(video_h * 0.2)) # Смещение на 20% вниз
                     ).set_start(w_start).set_end(w_end)
                     clips.append(text_clip)
-                    x_offset += TextClip(txt=normalize_text(w), fontsize=fontsize, font=font).size[0] + 10
+                    x_offset += TextClip(txt=normalize_text(w), fontsize=font_size, font=font).size[0] + 10
                 current_y_offset += line_height
                 current_line_words = [word_data]
                 current_line_width = word_width
@@ -258,7 +257,7 @@ def create_highlight_clips(
                 current_line_width = word_width
 
     if current_line_words:
-        total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=fontsize, font=font).size[0] + 10 for wd in current_line_words) - 10
+        total_width = sum(TextClip(txt=normalize_text(wd[0]), fontsize=font_size, font=font).size[0] + 10 for wd in current_line_words) - 10
         line_x_start = (video_w - total_width) // 2
         x_offset = 0
         for w_data in current_line_words:
@@ -266,34 +265,35 @@ def create_highlight_clips(
             # Создаем тень
             shadow_clip = create_shadow_clip(
                 text=w,
-                fontsize=fontsize,
-                color=SHADOW_COLOR,
-                stroke_width=4,
-                stroke_color='black',
-                x=line_x_start + x_offset + SHADOW_OFFSET_X,
-                y=video_h // 2 + current_y_offset + int(video_h * 0.2) + SHADOW_OFFSET_Y,
+                fontsize=font_size,
+                color=shadow_color,
+                stroke_width=text_stroke_width,
+                stroke_color=stroke_color,
+                x=line_x_start + x_offset + shadow_offset_x,
+                y=video_h // 2 + current_y_offset + int(video_h * 0.2) + shadow_offset_y,
                 start_time=w_start,
                 end_time=w_end,
-                font=font
+                font=font,
+                opacity=shadow_opacity
             )
             clips.append(shadow_clip)
             # Создаем основной текст
             text_clip = TextClip(
                 txt=normalize_text(w),
-                fontsize=fontsize,
+                fontsize=font_size,
                 font=font,
-                stroke_width=4,
-                stroke_color='black',
-                color=color
+                stroke_width=text_stroke_width,
+                stroke_color=stroke_color,
+                color=text_color
             ).set_position(
                 (line_x_start + x_offset, video_h // 2 + current_y_offset + int(video_h * 0.2)) # Смещение на 20% вниз
             ).set_start(w_start).set_end(w_end)
             clips.append(text_clip)
-            x_offset += TextClip(txt=normalize_text(w), fontsize=fontsize, font=font).size[0] + 10
+            x_offset += TextClip(txt=normalize_text(w), fontsize=font_size, font=font).size[0] + 10
 
     return clips
 
-def merge_audio_video_with_subtitles(video_path, audio_path, music_path, output_path, font_path):
+def merge_audio_video_with_subtitles(compose_config):
     """
     Накладывает аудио на видео и добавляет субтитры с тенью,
     разделяя их на блоки, строки и подсвечивая текущее слово.
@@ -302,15 +302,16 @@ def merge_audio_video_with_subtitles(video_path, audio_path, music_path, output_
     try:
         print("Распознавание речи с помощью Whisper...")
         model = whisper.load_model("base")
-        result = model.transcribe(audio_path, fp16=False, word_timestamps=True)
+        result = model.transcribe(compose_config['voice_path'], fp16=False, word_timestamps=True)
 
         # Загрузка видео и основной аудиодорожки
+        video_path = "temp_video.mp4" # Предполагается, что видео создается на предыдущем шаге
         video = VideoFileClip(video_path)
-        audio = AudioFileClip(audio_path)
+        audio = AudioFileClip(compose_config['voice_path'])
         audio_duration = audio.duration
 
         # Загрузка фоновой музыки
-        background_music = AudioFileClip(music_path).volumex(0.2)
+        background_music = AudioFileClip(compose_config['bg_music_path']).volumex(0.2)
         music_duration = background_music.duration
 
         # Обработка фоновой музыки
@@ -361,27 +362,39 @@ def merge_audio_video_with_subtitles(video_path, audio_path, music_path, output_
 
                     block_end = current_block_words[-1][2]
 
-                    # Белые клипы с тенью (видны во всё время блока)
+                    # Клипы (видны во всё время блока)
                     white_clips = create_line_clips(
                         words_list=current_block_words,
                         start_time=block_start,
                         end_time=block_end,
                         video_w=video_w,
                         video_h=video_h,
-                        fontsize=FONT_SIZE,
-                        color='white',
-                        font=font_path
+                        font=compose_config['font_path'],
+                        font_size=compose_config['font_size'],
+                        text_color=compose_config['text_color'],
+                        shadow_color=compose_config['shadow_color'],
+                        shadow_offset_x=compose_config['shadow_offset_x'],
+                        shadow_offset_y=compose_config['shadow_offset_y'],
+                        stroke_color=compose_config['stroke_color'],
+                        text_stroke_width=compose_config['text_stroke_width'],
+                        shadow_opacity=compose_config['shadow_opacity']
                     )
                     subtitle_clips.extend(white_clips)
 
-                    # Красные клипы с тенью (подсвечиваются лишь при произнесении)
+                    # Подсветка клипов (подсвечиваются лишь при произнесении)
                     highlight_clips = create_highlight_clips(
                         words_list=current_block_words,
                         video_w=video_w,
                         video_h=video_h,
-                        fontsize=FONT_SIZE,
-                        color=TEXT_COLOR,
-                        font=font_path
+                        font=compose_config['font_path'],
+                        font_size=compose_config['font_size'],
+                        text_color=compose_config['highlight_color'],
+                        shadow_color=compose_config['shadow_color'],
+                        shadow_offset_x=compose_config['shadow_offset_x'],
+                        shadow_offset_y=compose_config['shadow_offset_y'],
+                        stroke_color=compose_config['stroke_color'],
+                        text_stroke_width=compose_config['text_stroke_width'],
+                        shadow_opacity=compose_config['shadow_opacity'],
                     )
                     subtitle_clips.extend(highlight_clips)
 
@@ -390,8 +403,8 @@ def merge_audio_video_with_subtitles(video_path, audio_path, music_path, output_
                         block_start = words[i+1]['start']
 
         final_video = CompositeVideoClip([video_with_audio] + subtitle_clips)
-        final_video.write_videofile(output_path, codec="libx264", audio_codec="aac")
+        final_video.write_videofile(compose_config['output_video_name'], codec="libx264", audio_codec="aac")
 
-        print(f"Видео с субтитрами сохранено в: {output_path}")
+        print(f"Видео с субтитрами сохранено в: {compose_config['output_video_name']}")
     except Exception as e:
         print(f"Произошла ошибка: {e}")

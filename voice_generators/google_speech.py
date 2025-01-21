@@ -1,6 +1,6 @@
 from google.cloud import texttospeech
 
-def text_to_speech(text):
+def text_to_speech(text, config):
     # Instantiates a client
     client = texttospeech.TextToSpeechClient()
 
@@ -10,9 +10,8 @@ def text_to_speech(text):
     # Build the voice request, select the language code ("en-US") and the ssml
     # voice gender ("neutral")
     voice = texttospeech.VoiceSelectionParams(
-        # name="en-US-News-N",
-        name="en-US-Journey-D",
-        language_code="en-US"
+        name=config["name"],
+        language_code=config["language_code"]
     )
 
     # Select the type of audio file you want returned
@@ -26,8 +25,9 @@ def text_to_speech(text):
         input=synthesis_input, voice=voice, audio_config=audio_config
     )
 
+    path = config["voice_path"]
     # The response's audio_content is binary.
-    with open("voice.wav", "wb") as out:
+    with open(path, "wb") as out:
         # Write the response to the output file.
         out.write(response.audio_content)
-        print('Audio content written to file "voice.wav"')
+        print(f"Audio content written to file {path}")

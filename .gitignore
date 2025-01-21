@@ -10,9 +10,9 @@ latest_posts.txt
 *.jpg
 *.png
 *.mp3
+*.json
 .DS_Store
 *.pyc
 __pycache__
-credentials.json
-token.json
-techcrunch_posts.txt
+/data/storages/*
+/data/images/*

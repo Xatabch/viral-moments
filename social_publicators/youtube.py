@@ -5,36 +5,36 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-def authenticate_youtube_api():
+def authenticate_youtube_api(config):
     # Убедитесь, что у вас есть credentials.json, скачанный из Google Cloud Console
     SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
     
     creds = None
-    if os.path.exists("token.json"):
+    if os.path.exists(config["token_path"]):
         from google.oauth2.credentials import Credentials
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+        creds = Credentials.from_authorized_user_file(config["token_path"], SCOPES)
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(config["credentials_path"], SCOPES)
             creds = flow.run_local_server(port=0)
         
-        with open("token.json", "w") as token:
+        with open(config["token_path"], "w") as token:
             token.write(creds.to_json())
 
     return build("youtube", "v3", credentials=creds)
 
-def upload_video_to_youtube(video_file, title, description):
-    youtube = authenticate_youtube_api()
+def upload_video_to_youtube(video_file, title, description, config):
+    youtube = authenticate_youtube_api(config)
 
     # Параметры загрузки
     request_body = {
         "snippet": {
             "title": title,
             "description": description,
-            "tags": ["Python", "YouTube API", "Shorts"],
+            "tags": [],
             "categoryId": "22",  # Категория: 22 = People & Blogs
             "shorts": True  # Указываем, что видео предназначено для Shorts
         },
@@ -57,8 +57,8 @@ def upload_video_to_youtube(video_file, title, description):
         if status:
             print(f"Uploaded {int(status.progress() * 100)}%")
 
+    id = response["id"]
     print("Video uploaded successfully!")
-    print("Video URL: https://www.youtube.com/watch?v=" + response["id"])
+    print("Video URL: https://www.youtube.com/watch?v=" + id)
 
-if __name__ == "__main__":
-    upload_video_to_youtube('output.mp4', 'Tech news #TikTok#TechNews#AI#History#TechUpdate', "Catch up on the latest tech updates! TikTok returns in the US after a temporary ban, with a potential joint venture on the horizon. Plus, AI's struggle with history questions reveals its limitations. Don't miss out on these trending stories.")
+    return f"https://www.youtube.com/watch?v={id}"

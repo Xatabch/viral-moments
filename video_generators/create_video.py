@@ -4,21 +4,15 @@ from PIL import Image
 import glob
 import os
 
-
 def load_images(image_paths):
     """Загружает изображения (PIL -> BGR для OpenCV) в порядке чисел в именах файлов."""
-    # Сортировка списка путей по числовому значению в имени файла
     sorted_paths = sorted(image_paths, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
-    
-    # Загрузка изображений
     return [cv2.cvtColor(np.array(Image.open(p)), cv2.COLOR_RGB2BGR) for p in sorted_paths]
-
 
 def create_sequences(num_images):
     """
     Динамически создает последовательности анимаций и переходов для указанного количества изображений.
     """
-    # Базовые анимации и переходы
     base_animation_sequence = [
         zoom_out_animation,
         slide_left_to_right_inside,
@@ -33,7 +27,6 @@ def create_sequences(num_images):
         bottom_to_top_transition
     ]
 
-    # Генерация последовательностей
     animation_sequence = [base_animation_sequence[i % len(base_animation_sequence)] for i in range(num_images)]
     transition_sequence = [base_transition_sequence[i % len(base_transition_sequence)] for i in range(num_images - 1)]
 
@@ -52,12 +45,10 @@ def resize_and_crop(img, scale, shape):
     new_h = int(h * scale)
     scaled_img = cv2.resize(img, (new_w, new_h))
 
-    # Обрезаем по центру, если scaled_img больше, чем (w, h)
     dy = int((new_h - h) * 0.5)
     dx = int((new_w - w) * 0.5)
     roi = scaled_img[dy:dy + h, dx:dx + w]
     return roi
-
 
 # ---------------------------------------------------------------------------------
 #                          Подготовка к анимации img2
@@ -68,17 +59,11 @@ def prepare_for_animation(img, animation_func, shape,
     """
     Готовит (масштабирует) изображение `img` к тому состоянию,
     с которого начнётся анимация `animation_func`.
-
-    - Если это zoom_out_animation, то "стартовый" масштаб = scale_out[0] (обычно 1.2).
-    - Если zoom_in_animation, то "стартовый" масштаб = scale_in[0] (обычно 1.0).
-    - Если slide_..._inside (PAN), то можем сразу брать scale_pan (например, 1.2).
-    - Если что-то другое – берём просто (1.0).
     """
-    # Смотрим, что за функция
     if animation_func == zoom_out_animation:
-        start_scale = scale_out[0]  # обычно 1.2
+        start_scale = scale_out[0]
     elif animation_func == zoom_in_animation:
-        start_scale = scale_in[0]  # обычно 1.0
+        start_scale = scale_in[0]
     elif animation_func in (
             slide_left_to_right_inside,
             slide_right_to_left_inside,
@@ -86,19 +71,17 @@ def prepare_for_animation(img, animation_func, shape,
             slide_bottom_to_top_inside,
             slide_top_left_to_bottom_right_inside
     ):
-        start_scale = scale_pan  # например, 1.2
+        start_scale = scale_pan
     else:
-        # fallback - ничего не делаем
         start_scale = 1.0
 
     return resize_and_crop(img, start_scale, shape)
-
 
 # ---------------------------------------------------------------------------------
 #                       Анимации (PAN) одного изображения
 # ---------------------------------------------------------------------------------
 
-def slide_left_to_right_inside(img, steps=20, shape=(100, 100), scale=1.2):
+def slide_left_to_right_inside(img, steps, shape, scale):
     h, w = shape
     zoom_w = int(w * scale)
     zoom_h = int(h * scale)
@@ -114,8 +97,7 @@ def slide_left_to_right_inside(img, steps=20, shape=(100, 100), scale=1.2):
         frames.append(roi)
     return frames
 
-
-def slide_right_to_left_inside(img, steps=20, shape=(100, 100), scale=1.2):
+def slide_right_to_left_inside(img, steps, shape, scale):
     h, w = shape
     zoom_w = int(w * scale)
     zoom_h = int(h * scale)
@@ -131,8 +113,7 @@ def slide_right_to_left_inside(img, steps=20, shape=(100, 100), scale=1.2):
         frames.append(roi)
     return frames
 
-
-def slide_top_to_bottom_inside(img, steps=20, shape=(100, 100), scale=1.2):
+def slide_top_to_bottom_inside(img, steps, shape, scale):
     h, w = shape
     zoom_w = int(w * scale)
     zoom_h = int(h * scale)
@@ -148,8 +129,7 @@ def slide_top_to_bottom_inside(img, steps=20, shape=(100, 100), scale=1.2):
         frames.append(roi)
     return frames
 
-
-def slide_bottom_to_top_inside(img, steps=20, shape=(100, 100), scale=1.2):
+def slide_bottom_to_top_inside(img, steps, shape, scale):
     h, w = shape
     zoom_w = int(w * scale)
     zoom_h = int(h * scale)
@@ -165,8 +145,7 @@ def slide_bottom_to_top_inside(img, steps=20, shape=(100, 100), scale=1.2):
         frames.append(roi)
     return frames
 
-
-def slide_top_left_to_bottom_right_inside(img, steps=20, shape=(100, 100), scale=1.2):
+def slide_top_left_to_bottom_right_inside(img, steps, shape, scale):
     h, w = shape
     zoom_w = int(w * scale)
     zoom_h = int(h * scale)
@@ -184,13 +163,11 @@ def slide_top_left_to_bottom_right_inside(img, steps=20, shape=(100, 100), scale
         frames.append(roi)
     return frames
 
-
 # ---------------------------------------------------------------------------------
 #                       Zoom-анимации одного изображения
 # ---------------------------------------------------------------------------------
 
-def zoom_in_animation(img, steps=20, shape=(100, 100),
-                      start_scale=1.0, end_scale=1.2):
+def zoom_in_animation(img, steps, shape, start_scale, end_scale):
     """
     Анимация увеличения: от start_scale к end_scale.
     """
@@ -202,9 +179,7 @@ def zoom_in_animation(img, steps=20, shape=(100, 100),
         frames.append(roi)
     return frames
 
-
-def zoom_out_animation(img, steps=20, shape=(100, 100),
-                       start_scale=1.2, end_scale=1.0):
+def zoom_out_animation(img, steps, shape, start_scale, end_scale):
     """
     Анимация уменьшения: от start_scale к end_scale.
     """
@@ -216,12 +191,11 @@ def zoom_out_animation(img, steps=20, shape=(100, 100),
         frames.append(roi)
     return frames
 
-
 # ---------------------------------------------------------------------------------
 #                       Эффект Blur
 # ---------------------------------------------------------------------------------
 
-def blur_effect(img, steps=10, shape=(100, 100)):
+def blur_effect(img, steps, shape):
     """
     Эффект размытия, возвращает список кадров.
     """
@@ -236,11 +210,10 @@ def blur_effect(img, steps=10, shape=(100, 100)):
         frames.append(blurred)
     return frames
 
-
 # ---------------------------------------------------------------------------------
 #                       Переходы между изображениями
 # ---------------------------------------------------------------------------------
-def top_to_bottom_transition(img1, img2, steps=20, shape=(100, 100)):
+def top_to_bottom_transition(img1, img2, steps, shape):
     h, w = shape
     i1 = cv2.resize(img1, (w, h))
     i2 = cv2.resize(img2, (w, h))
@@ -254,8 +227,7 @@ def top_to_bottom_transition(img1, img2, steps=20, shape=(100, 100)):
         frames.append(slide)
     return frames
 
-
-def bottom_to_top_transition(img1, img2, steps=20, shape=(100, 100)):
+def bottom_to_top_transition(img1, img2, steps, shape):
     h, w = shape
     i1 = cv2.resize(img1, (w, h))
     i2 = cv2.resize(img2, (w, h))
@@ -269,8 +241,7 @@ def bottom_to_top_transition(img1, img2, steps=20, shape=(100, 100)):
         frames.append(slide)
     return frames
 
-
-def left_to_right_transition(img1, img2, steps=20, shape=(100, 100)):
+def left_to_right_transition(img1, img2, steps, shape):
     h, w = shape
     i1 = cv2.resize(img1, (w, h))
     i2 = cv2.resize(img2, (w, h))
@@ -284,8 +255,7 @@ def left_to_right_transition(img1, img2, steps=20, shape=(100, 100)):
         frames.append(slide)
     return frames
 
-
-def right_to_left_transition(img1, img2, steps=20, shape=(100, 100)):
+def right_to_left_transition(img1, img2, steps, shape):
     h, w = shape
     i1 = cv2.resize(img1, (w, h))
     i2 = cv2.resize(img2, (w, h))
@@ -299,8 +269,7 @@ def right_to_left_transition(img1, img2, steps=20, shape=(100, 100)):
         frames.append(slide)
     return frames
 
-
-def top_right_to_bottom_left_transition(img1, img2, steps=20, shape=(100, 100)):
+def top_right_to_bottom_left_transition(img1, img2, steps, shape):
     h, w = shape
     i1 = cv2.resize(img1, (w, h))
     i2 = cv2.resize(img2, (w, h))
@@ -316,13 +285,12 @@ def top_right_to_bottom_left_transition(img1, img2, steps=20, shape=(100, 100)):
         frames.append(slide)
     return frames
 
-
 # ---------------------------------------------------------------------------------
 #                           Основная логика (main)
 # ---------------------------------------------------------------------------------
 
-def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durations=None):
-    image_paths = glob.glob(f"{image_folder}/*.jpg")
+def create_video(video_config):
+    image_paths = glob.glob(f"{video_config['image_folder_path']}/*.jpg")
     images = load_images(image_paths)
     num_images = len(images)
 
@@ -330,28 +298,12 @@ def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durati
         print("Нужно минимум 2 изображения для слайдшоу.")
         return
 
-    if image_durations is None:
-        image_durations = [2] * num_images
-    if len(image_durations) != num_images:
-        print("Количество длительностей != количеству изображений.")
-        return
-
+    image_duration = video_config['image_animations_durations']
     h, w, _ = images[0].shape
-
-    # Последовательности анимаций и переходов остаются без изменений
-    # animation_sequence = [
-    #     zoom_out_animation,
-    #     slide_left_to_right_inside,
-    #     zoom_in_animation,
-    #     zoom_out_animation,
-    #     zoom_out_animation
-    # ]
-    # transition_sequence = [
-    #     bottom_to_top_transition,
-    #     left_to_right_transition,
-    #     top_right_to_bottom_left_transition,
-    #     bottom_to_top_transition
-    # ]
+    fps = video_config['video_fps']
+    blur_animation_duration = video_config.get('blur_animation', 0.1)
+    transition_animation_duration = video_config.get('transition_animation', 0.1)
+    output_file = video_config['output_video_file_name']
 
     animation_sequence, transition_sequence = create_sequences(num_images)
 
@@ -363,20 +315,14 @@ def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durati
 
     all_frames = []
 
-    # Обработка всех изображений, кроме последнего
     for i in range(num_images - 1):
         img1 = images[i]
         img2 = images[i + 1]
 
-        if i + 1 < num_images - 1:
-            next_anim_func = get_animation(i + 1)
-        else:
-            next_anim_func = None
-
+        next_anim_func = get_animation(i + 1) if i + 1 < num_images - 1 else None
         current_anim_func = get_animation(i)
-        anim_steps = int(fps * 2)  # 2 секунды анимации
+        anim_steps = int(fps * image_duration)
 
-        # Выполнение анимации для текущего изображения
         if current_anim_func == zoom_in_animation:
             animation_frames = zoom_in_animation(img1, steps=anim_steps, shape=(h, w),
                                                  start_scale=1.0, end_scale=1.2)
@@ -397,22 +343,19 @@ def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durati
         all_frames.extend(animation_frames)
         final_animated_frame = animation_frames[-1]
 
-        blur_frames = blur_effect(final_animated_frame, steps=int(fps * 0.1), shape=(h, w))
+        blur_steps = int(fps * blur_animation_duration)
+        blur_frames = blur_effect(final_animated_frame, steps=blur_steps, shape=(h, w))
         all_frames.extend(blur_frames)
         blurred_image = blur_frames[-1]
 
-        # Пропускаем этап блюра и переходим к переходу
-        if next_anim_func is not None:
-            img2_prepared = prepare_for_animation(img2, next_anim_func,
-                                                  shape=(h, w),
-                                                  scale_pan=1.2,
-                                                  scale_in=(1.0, 1.2),
-                                                  scale_out=(1.2, 1.0))
-        else:
-            img2_prepared = cv2.resize(img2, (w, h))
+        img2_prepared = prepare_for_animation(img2, next_anim_func,
+                                              shape=(h, w),
+                                              scale_pan=1.2,
+                                              scale_in=(1.0, 1.2),
+                                              scale_out=(1.2, 1.0))
 
         transition_func = get_transition(i)
-        transition_steps = int(fps * 0.1)
+        transition_steps = int(fps * transition_animation_duration)
         transition_frames = transition_func(blurred_image, img2_prepared,
                                             steps=transition_steps, shape=(h, w))
         all_frames.extend(transition_frames)
@@ -421,9 +364,8 @@ def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durati
     last_index = num_images - 1
     last_img = images[last_index]
     current_anim_func = get_animation(last_index)
-    anim_steps = int(fps * 2)  # 2 секунды анимации
+    anim_steps = int(fps * image_duration)
 
-    # Применение выбранной анимации к последнему изображению
     if current_anim_func == zoom_in_animation:
         animation_frames = zoom_in_animation(last_img, steps=anim_steps, shape=(h, w),
                                              start_scale=1.0, end_scale=1.2)
@@ -445,7 +387,6 @@ def create_video(image_folder, output_file='slideshow.mp4', fps=60, image_durati
 
     print(f"Всего кадров: {len(all_frames)}")
 
-    # Сохранение результата в видеофайл
     fourcc = cv2.VideoWriter.fourcc(*'mp4v')
     writer = cv2.VideoWriter(output_file, fourcc, fps, (w, h))
     for f in all_frames:

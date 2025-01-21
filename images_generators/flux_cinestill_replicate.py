@@ -1,22 +1,25 @@
 from replicate import Client
-from configs import config
+from configs import config as base_config
 
-
-def generate_images(prompts):
-    client = Client(api_token=config.REPLICATE_API_TOKEN)
+def generate_images(prompts, config):
+    client = Client(api_token=base_config.REPLICATE_API_TOKEN)
     i = 0
 
     for prompt in prompts:
-        print("CNSTILL, " + prompt + " in cinematic style, dark neon light")
+        if config["additional_prompt"]:
+            prompt = prompt + config["additional_prompt"]
+
+        print("CNSTILL, " + prompt)
+
         input = {
-            "prompt": "CNSTILL, " + prompt + " in cinematic style, dark neon light",
-            "lora_scale": 1,
-            "aspect_ratio": "9:16",
-            "guidance_scale": 3.5,
-            "extra_lora_scale": 1,
-            "output_quality": 100,
-            "width": 810,
-            "height": 1440
+            "prompt": "CNSTILL, " + prompt,
+            "lora_scale": config["lora_scale"],
+            "aspect_ratio": config["aspect_ratio"],
+            "guidance_scale": config["guidance_scale"],
+            "extra_lora_scale": config["extra_lora_scale"],
+            "output_quality": config["output_quality"],
+            "width": config["width"],
+            "height": config["height"]
         }
 
         output = client.run(
@@ -24,8 +27,11 @@ def generate_images(prompts):
             input=input
         )
 
-        for index, item in enumerate(output):
-            with open(f"./data/images/{i}.jpg", "wb") as file:
+        folder = config["image_folder_path"]
+        path = f"{folder}/{i}.jpg"
+
+        for _, item in enumerate(output):
+            with open(path, "wb") as file:
                 file.write(item.read())
 
         i += 1
